@@ -1,6 +1,6 @@
 # Bloom — Product Requirements Document
 
-**Version:** 1.7
+**Version:** 1.8
 **Date:** 2026-10-04
 **Stack:** Vanilla HTML, CSS, JavaScript (no frameworks, no backend)
 
@@ -90,6 +90,7 @@ The message is written in the customer's currently selected language.
 - **Scrolling (scrubbed, `scrub: true`):** section animations follow the scroll position and play backwards when scrolling up. Headings rise word by word. Category chips, product cards, promo banners (alternating sides, with spinning and drifting images), reviews, the newsletter (unmasks), features and the footer animate in. The end points use `clamp()`, so sections near the bottom of the page still finish.
 - **Content visible on load** (hero, top of the shop and product pages, cart, shop cards already on screen) uses time-based entrances, because a scrubbed animation there would already be finished.
 - **Interactions:** the product image flies into the cart icon when added, and the cart icon bounces and its count pops. The theme switch spreads from the toggle in a circle (View Transitions API). Primary buttons follow the pointer slightly on desktop. Product gallery images crossfade, removed cart lines collapse, the cart total pulses, and menus and the filters panel stagger open. Content fades out before moving to another page.
+- **Page transitions:** clicking a link to another page sweeps up a curtain with a curved top edge (a blush layer, then a deep-green layer) and the Bloom logo appears. The next page starts covered: the curtain is in each page's HTML and the `<head>` script shows it before anything is drawn. The curtain then lifts away and the content rises in. Pages restored with the browser's back button are reset. New-tab clicks, external links and same-page anchor links aren't affected.
 - **Reduced motion:** everything is switched off when the device asks for reduced motion.
 
 ## 6. Design
@@ -206,6 +207,7 @@ Run locally with `python3 -m http.server` from the project folder. The pages use
 
 ## Changelog
 
+- **1.8 (2026-10-04):** Added curtain page transitions (5.7).
 - **1.7 (2026-10-04):** Added Lenis smooth scrolling. Section animations are now scrubbed to the scroll position (5.7).
 - **1.6 (2026-10-04):** Added GSAP animations (5.7).
 - **1.5 (2026-10-04):** WhatsApp order number set to +972 59 260 7179.

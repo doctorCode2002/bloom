@@ -69,12 +69,16 @@ export async function revealPage() {
     } catch {}
 
     const tl = gsap.timeline();
-    if (firstVisit) {
+    const entering = document.documentElement.classList.contains("pt-enter");
+    if (entering) {
+      tl.add(curtainOut(), 0);
+      tl.from("#main", { y: 60, autoAlpha: 0, duration: 1, ease: "expo.out", clearProps: "transform,opacity,visibility" }, 0.45);
+    } else if (firstVisit) {
       tl.from(".announcement", { yPercent: -100, duration: 0.6, ease: "power2.out" })
         .from(".header-row > *", { y: -16, autoAlpha: 0, stagger: 0.08, duration: 0.6, clearProps: CLEAR }, 0.15)
         .from(".all-categories, .nav-links li", { y: 12, autoAlpha: 0, stagger: 0.045, duration: 0.5, clearProps: CLEAR }, 0.3);
     }
-    tl.from("#main", { autoAlpha: 0, duration: 0.5, ease: "power1.out", clearProps: "opacity,visibility" }, firstVisit ? 0.2 : 0);
+    if (!entering) tl.from("#main", { autoAlpha: 0, duration: 0.5, ease: "power1.out", clearProps: "opacity,visibility" }, firstVisit ? 0.2 : 0);
   }
   markReady();
   if (animate) {
@@ -438,25 +442,60 @@ export function themeTransition(button, apply) {
   });
 }
 
-// ── Leaving the page: fade content out before navigating ────────────────────
+// ── Page transitions: a curtain sweeps up to cover the page, the next page ──
+// ── starts covered (see the <head> script) and the curtain lifts away ───────
+
+const CURVE = "50% 50% 0 0 / 14vh 14vh 0 0";
+
+function curtainOut() {
+  const curtain = document.querySelector(".curtain");
+  const tl = gsap.timeline({
+    onComplete: () => {
+      document.documentElement.classList.remove("pt-enter");
+      gsap.set(curtain, { clearProps: "visibility" });
+      gsap.set(".curtain-layer, .curtain-logo", { clearProps: "all" });
+    },
+  });
+  tl.set(curtain, { visibility: "visible" })
+    .to(".curtain-logo", { y: -30, autoAlpha: 0, duration: 0.4, ease: "power2.in" }, 0)
+    .to(".curtain-main", { yPercent: -100, borderRadius: "0 0 50% 50% / 0 0 14vh 14vh", duration: 0.9, ease: "expo.inOut" }, 0.15)
+    .to(".curtain-accent", { yPercent: -100, borderRadius: "0 0 50% 50% / 0 0 14vh 14vh", duration: 0.9, ease: "expo.inOut" }, 0.27);
+  return tl;
+}
+
+function curtainIn(onDone) {
+  const curtain = document.querySelector(".curtain");
+  gsap.timeline({ onComplete: onDone })
+    .set(curtain, { visibility: "visible" })
+    .fromTo(".curtain-accent", { yPercent: 100, borderRadius: CURVE }, { yPercent: 0, borderRadius: "0%", duration: 0.75, ease: "expo.inOut" }, 0)
+    .fromTo(".curtain-main", { yPercent: 100, borderRadius: CURVE }, { yPercent: 0, borderRadius: "0%", duration: 0.75, ease: "expo.inOut" }, 0.12)
+    .fromTo(".curtain-logo", { y: 30, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.45, ease: "power3.out" }, 0.55)
+    .to("#main", { y: -40, duration: 0.8, ease: "expo.inOut" }, 0);
+}
 
 export function pageTransitions() {
-  if (!animate) return;
+  if (!animate || !document.querySelector(".curtain")) return;
+  let leaving = false;
   document.addEventListener("click", (e) => {
     const a = e.target.closest("a[href]");
-    if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    if (!a || leaving || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     if (a.target === "_blank" || a.hasAttribute("download")) return;
     const url = new URL(a.href, location.href);
     if (url.origin !== location.origin || url.href === location.href || (url.pathname === location.pathname && url.hash)) return;
     e.preventDefault();
+    leaving = true;
     lockScroll(true);
-    gsap.to("#main, #site-bottom", { autoAlpha: 0, y: -12, duration: 0.28, ease: "power2.in", onComplete: () => (location.href = url.href) });
+    try { sessionStorage.setItem("bloom-transition", "1"); } catch {}
+    curtainIn(() => (location.href = url.href));
   });
-  // Coming back with the browser's back button restores the page from cache
+
+  // Coming back with the browser's back button restores this page from cache,
+  // still covered by the curtain: reset everything
   window.addEventListener("pageshow", (e) => {
-    if (e.persisted) {
-      gsap.set("#main, #site-bottom", { clearProps: "all" });
-      lockScroll(false);
-    }
+    if (!e.persisted) return;
+    leaving = false;
+    try { sessionStorage.removeItem("bloom-transition"); } catch {}
+    gsap.set(".curtain, .curtain-layer, .curtain-logo, #main", { clearProps: "all" });
+    lockScroll(false);
   });
 }

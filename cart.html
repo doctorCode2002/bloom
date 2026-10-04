@@ -17,7 +17,9 @@
       if (lang === "ar") { d.lang = "ar"; d.dir = "rtl"; }
       // Hide the page until fonts are ready (js/motion.js reveals it); never longer than 3s
       d.classList.add("is-loading");
-      window.__bloomReveal = setTimeout(function () { d.classList.remove("is-loading"); }, 3000);
+      // Arriving through a page transition: start covered by the curtain
+      try { if (sessionStorage.getItem("bloom-transition")) { d.classList.add("pt-enter"); sessionStorage.removeItem("bloom-transition"); } } catch (e) {}
+      window.__bloomReveal = setTimeout(function () { d.classList.remove("is-loading", "pt-enter"); }, 3000);
     })();
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -37,6 +39,15 @@
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
+  <div class="curtain" aria-hidden="true">
+    <div class="curtain-layer curtain-accent"></div>
+    <div class="curtain-layer curtain-main">
+      <span class="curtain-logo">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 16.5A4.5 4.5 0 1 1 7.5 12 4.5 4.5 0 1 1 12 7.5a4.5 4.5 0 1 1 4.5 4.5 4.5 4.5 0 1 1-4.5 4.5"/></svg>
+        Bloom
+      </span>
+    </div>
+  </div>
   <div id="site-top"></div>
   <main id="main" tabindex="-1"></main>
   <div id="site-bottom"></div>

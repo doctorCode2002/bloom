@@ -684,3 +684,17 @@ textarea.input { resize: vertical; min-block-size: 80px; }
 
 /* Theme switch: let the circular clip-path animation do the work */
 ::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+
+/* Page transition curtain (animated by js/motion.js) */
+.curtain { position: fixed; inset: 0; z-index: 300; pointer-events: none; visibility: hidden; overflow: hidden; }
+.curtain-layer { position: absolute; inset: 0; will-change: transform; }
+.curtain-accent { background: var(--color-accent-blush); }
+.curtain-main { display: grid; place-items: center; background: var(--color-bg-brand-deep); }
+.curtain-logo {
+  display: inline-flex; align-items: center; gap: var(--space-3);
+  font-family: var(--font-serif); font-size: 2.25rem; font-weight: 600; color: var(--color-text-on-brand-deep);
+}
+.curtain-logo svg { color: var(--color-accent-blush); }
+.pt-enter .curtain { visibility: visible; pointer-events: auto; }
+.pt-enter body::after { display: none; }
+@media (prefers-reduced-motion: reduce) { .curtain { display: none; } }
