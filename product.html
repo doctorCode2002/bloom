@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Product · Bloom</title>
+  <meta name="description" content="Product details at Bloom.">
+  <meta name="theme-color" content="#1F3D2B">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <script>
+    // Apply saved theme and language before the page paints (no flash)
+    (function () {
+      var d = document.documentElement, theme, lang;
+      try { theme = localStorage.getItem("bloom-theme"); lang = localStorage.getItem("bloom-lang"); } catch (e) {}
+      if (theme !== "light" && theme !== "dark") theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      d.dataset.theme = theme;
+      if (lang === "ar") { d.lang = "ar"; d.dir = "rtl"; }
+      // Hide the page until fonts are ready (js/motion.js reveals it); never longer than 3s
+      d.classList.add("is-loading");
+      window.__bloomReveal = setTimeout(function () { d.classList.remove("is-loading"); }, 3000);
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://dummyjson.com">
+  <link rel="preconnect" href="https://cdn.dummyjson.com">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/SplitText.min.js"></script>
+  <script type="module" src="js/product.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div id="site-top"></div>
+  <main id="main" tabindex="-1"></main>
+  <div id="site-bottom"></div>
+  <noscript><p class="container">Bloom needs JavaScript to load products.</p></noscript>
+</body>
+</html>

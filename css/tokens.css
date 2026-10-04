@@ -1,0 +1,134 @@
+/* Bloom design tokens — generated from the Figma design system (design-system/bloom-design-system.ts) */
+
+:root {
+  color-scheme: light;
+
+  /* Background */
+  --color-bg-canvas: #FAF7F2;
+  --color-bg-surface: #FFFFFF;
+  --color-bg-muted: #F3EEE6;
+  --color-bg-brand-deep: #1F3D2B;
+
+  /* Text */
+  --color-text-primary: #1C1C1A;
+  --color-text-secondary: #5E5E58;
+  --color-text-muted: #9A9A94;
+  --color-text-on-primary: #FFFFFF;
+  --color-text-on-accent: #1C1C1A;
+  --color-text-on-sale: #FFFFFF;
+  --color-text-on-brand-deep: #FAF7F2;
+
+  /* Border */
+  --color-border-default: #E7E1D7;
+  --color-border-strong: #CFC7BA;
+
+  /* Brand */
+  --color-brand-primary: #1F3D2B;
+  --color-brand-primary-hover: #2F5A41;
+  --color-brand-primary-subtle: #E4ECE5;
+
+  /* Accent */
+  --color-accent-blush: #E8A8A0;
+  --color-accent-blush-subtle: #F6DCD7;
+
+  /* Sale */
+  --color-sale-badge: #E5534B;
+  --color-sale-price: #C73E37;
+  --color-sale-old-price: #9A9A94;
+
+  /* Feedback */
+  --color-feedback-success: #2E7D4F;
+  --color-feedback-warning: #C98A1B;
+  --color-feedback-error: #C73E37;
+  --color-rating-star: #F2B33D;
+
+  /* Tints */
+  --color-tint-blush: #FBE7E3;
+  --color-tint-sage: #E6EFE3;
+  --color-tint-sand: #F5ECDD;
+  --color-tint-sky: #E3EEF6;
+  --color-tint-lilac: #EEE6F3;
+
+  /* Spacing (4px scale) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 999px;
+
+  /* Shadows (tinted with the brand green) */
+  --shadow-sm: 0 1px 3px rgba(31, 61, 43, 0.06), 0 1px 2px rgba(31, 61, 43, 0.04);
+  --shadow-md: 0 4px 12px rgba(31, 61, 43, 0.08);
+  --shadow-lg: 0 12px 32px rgba(31, 61, 43, 0.12);
+
+  /* Fonts */
+  --font-serif: "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-arabic: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+  --font-heading: var(--font-serif);
+  --font-body: var(--font-sans);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-bg-canvas: #0F1512;
+  --color-bg-surface: #18211C;
+  --color-bg-muted: #1F2A24;
+  --color-bg-brand-deep: #123527;
+
+  --color-text-primary: #EDEAE4;
+  --color-text-secondary: #B5B2AA;
+  --color-text-muted: #7E8580;
+  --color-text-on-primary: #0F1512;
+  --color-text-on-accent: #0F1512;
+  --color-text-on-sale: #FFFFFF;
+  --color-text-on-brand-deep: #EDEAE4;
+
+  --color-border-default: #2C3A32;
+  --color-border-strong: #3D4E44;
+
+  --color-brand-primary: #8FC4A3;
+  --color-brand-primary-hover: #A8D5B8;
+  --color-brand-primary-subtle: #1E3428;
+
+  --color-accent-blush: #F0B9B1;
+  --color-accent-blush-subtle: #3A2826;
+
+  --color-sale-badge: #E5534B;
+  --color-sale-price: #FF8A82;
+  --color-sale-old-price: #7E8580;
+
+  --color-feedback-success: #6FCF97;
+  --color-feedback-warning: #F2C46D;
+  --color-feedback-error: #FF8A82;
+  --color-rating-star: #F2C46D;
+
+  --color-tint-blush: #3A2826;
+  --color-tint-sage: #1E3428;
+  --color-tint-sand: #33291D;
+  --color-tint-sky: #1C2B36;
+  --color-tint-lilac: #2B2236;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+[dir="rtl"] {
+  --font-heading: var(--font-arabic);
+  --font-body: var(--font-arabic);
+}
