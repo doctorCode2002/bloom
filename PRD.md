@@ -1,6 +1,6 @@
 # Bloom — Product Requirements Document
 
-**Version:** 1.8
+**Version:** 1.9
 **Date:** 2026-10-04
 **Stack:** Vanilla HTML, CSS, JavaScript (no frameworks, no backend)
 
@@ -166,7 +166,7 @@ Designed in Figma by `design-system/bloom-home.ts` (run after the design system 
 ## 7. Technical Requirements
 
 - Pure HTML, CSS, JS. No build step required.
-- Must run as a static site on **GitHub Pages**.
+- Must run as a static site on **GitHub Pages**. Live at https://doctorcode2002.github.io/bloom/ (repository: https://github.com/doctorCode2002/bloom). Pushing to `main` updates the live site.
 - Product data fetched client-side from the API (the API must allow CORS).
 - Basic SEO: page titles, meta descriptions, semantic HTML.
 - Accessibility: alt text, keyboard navigation, sufficient contrast.
@@ -207,6 +207,7 @@ Run locally with `python3 -m http.server` from the project folder. The pages use
 
 ## Changelog
 
+- **1.9 (2026-10-04):** Published to GitHub Pages.
 - **1.8 (2026-10-04):** Added curtain page transitions (5.7).
 - **1.7 (2026-10-04):** Added Lenis smooth scrolling. Section animations are now scrubbed to the scroll position (5.7).
 - **1.6 (2026-10-04):** Added GSAP animations (5.7).
