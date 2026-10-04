@@ -3,7 +3,7 @@ import { t, lang, categoryName, formatPrice, countLabel, SAUDI_CITIES } from "./
 import { icon } from "./icons.js";
 import { initLayout, esc, $ } from "./ui.js";
 import { getCart, setQty, removeFromCart, clearCart, cartTotals } from "./cart.js";
-import { cartIntro, collapse, pulse, magnetic } from "./motion.js";
+import { cartIntro, collapse, pulse, magnetic, scrollToTop } from "./motion.js";
 
 initLayout("cart");
 
@@ -250,7 +250,7 @@ main.addEventListener("submit", (e) => {
   window.open(`https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(text)}`, "_blank", "noopener");
   sent = true;
   render();
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  scrollToTop();
 });
 
 window.addEventListener("cart:change", () => {

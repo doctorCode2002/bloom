@@ -5,7 +5,7 @@ import { CATEGORIES, GROUPS } from "./config.js";
 import { t, lang, setLang, formatPrice, categoryName } from "./i18n.js";
 import { icon } from "./icons.js";
 import { addToCart, cartCount } from "./cart.js";
-import { revealPage, footerReveal, magnetic, pageTransitions, flyToCart, spinIcon, openMenu, openDropdown, themeTransition } from "./motion.js";
+import { revealPage, footerReveal, magnetic, pageTransitions, flyToCart, spinIcon, openMenu, openDropdown, themeTransition, lockScroll } from "./motion.js";
 
 export function esc(value) {
   return String(value ?? "")
@@ -121,13 +121,13 @@ function header(active) {
         </div>
       </div>
     </header>
-    <nav class="site-nav" id="site-nav" aria-label="Main">
+    <nav class="site-nav" id="site-nav" aria-label="Main" data-lenis-prevent>
       <div class="container nav-row">
         <div class="all-categories">
           <button class="btn btn-primary btn-sm all-categories-btn" type="button" data-categories-toggle aria-expanded="false">
             ${icon("menu", 18)} ${t("nav.allCategories")} ${icon("chevronDown", 16)}
           </button>
-          <div class="categories-menu" hidden>${categoryMenu()}</div>
+          <div class="categories-menu" hidden data-lenis-prevent>${categoryMenu()}</div>
         </div>
         <ul class="nav-links">
           ${NAV_LINKS.map((l) => `<li><a href="${l.href}" ${l.key === active ? 'aria-current="page"' : ""}>${t(`nav.${l.key}`)}</a></li>`).join("")}
@@ -329,6 +329,7 @@ function toggleMenu(btn) {
   const bottom = $(".site-header").getBoundingClientRect().bottom;
   document.documentElement.style.setProperty("--header-bottom", `${Math.max(0, bottom)}px`);
   document.body.classList.toggle("nav-open", open);
+  lockScroll(open);
   if (open) openMenu($("#site-nav"));
 }
 

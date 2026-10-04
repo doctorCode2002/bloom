@@ -3,7 +3,7 @@ import { getCatalog } from "./api.js";
 import { t, categoryName, countLabel } from "./i18n.js";
 import { icon } from "./icons.js";
 import { initLayout, productCard, skeletonCards, errorState, esc, $ } from "./ui.js";
-import { fontsReady, shopIntro, animateGrid, openFilters, magnetic } from "./motion.js";
+import { fontsReady, shopIntro, animateGrid, openFilters, magnetic, lockScroll } from "./motion.js";
 
 initLayout("shop");
 
@@ -74,7 +74,7 @@ function pageTitle() {
 
 function filtersPanel() {
   return `
-    <aside class="filters" id="filters" aria-label="${t("shop.filters")}">
+    <aside class="filters" id="filters" aria-label="${t("shop.filters")}" data-lenis-prevent>
       <div class="filters-head">
         <h2 class="h4">${t("shop.filters")}</h2>
         <button class="icon-btn show-mobile" type="button" data-filters-close aria-label="${t("shop.show")}">${icon("close", 20)}</button>
@@ -187,13 +187,20 @@ function bind() {
     }
     if (e.target.closest("[data-filters-open]")) {
       document.body.classList.add("filters-open");
+      if (!window.matchMedia("(min-width: 1024px)").matches) lockScroll(true);
       openFilters($("#filters"));
     }
-    if (e.target.closest("[data-filters-close]")) document.body.classList.remove("filters-open");
+    if (e.target.closest("[data-filters-close]")) {
+      document.body.classList.remove("filters-open");
+      lockScroll(false);
+    }
   });
 
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") document.body.classList.remove("filters-open");
+    if (e.key === "Escape" && document.body.classList.contains("filters-open")) {
+      document.body.classList.remove("filters-open");
+      lockScroll(false);
+    }
   });
 }
 

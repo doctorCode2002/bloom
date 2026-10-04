@@ -5,6 +5,11 @@
 // 1.5s), removes the class and plays the intro in the same frame. Content that
 // is rendered later gets its "from" state applied synchronously, before the
 // browser paints it. Everything is skipped for prefers-reduced-motion.
+//
+// Smooth scrolling comes from Lenis, driven by GSAP's ticker so ScrollTrigger
+// stays in sync. Section reveals are scrubbed: they follow the scroll position
+// (`scrub: true`) and play backwards when scrolling up. Content that is already
+// on screen when a page loads gets a time-based intro instead.
 
 const gsap = window.gsap;
 const { ScrollTrigger, SplitText } = window;
@@ -16,6 +21,27 @@ if (animate) {
   gsap.registerPlugin(ScrollTrigger, SplitText);
   gsap.defaults({ ease: "power3.out", duration: 0.8 });
   gsap.config({ nullTargetWarn: false });
+}
+
+// ── Smooth scroll (Lenis) ────────────────────────────────────────────────────
+
+export const lenis = animate && window.Lenis ? new window.Lenis({ lerp: 0.09, smoothWheel: true }) : null;
+if (lenis) {
+  lenis.on("scroll", ScrollTrigger.update);
+  gsap.ticker.add((time) => lenis.raf(time * 1000));
+  gsap.ticker.lagSmoothing(0);
+}
+
+export function scrollToTop() {
+  if (lenis) lenis.scrollTo(0, { duration: 1.2 });
+  else window.scrollTo({ top: 0, behavior: reducedMotion ? "auto" : "smooth" });
+}
+
+/** Stop page scrolling while a drawer or menu is open. */
+export function lockScroll(locked) {
+  if (!lenis) return;
+  if (locked) lenis.stop();
+  else lenis.start();
 }
 
 const dir = () => (document.dir === "rtl" ? -1 : 1);
@@ -51,7 +77,15 @@ export async function revealPage() {
     tl.from("#main", { autoAlpha: 0, duration: 0.5, ease: "power1.out", clearProps: "opacity,visibility" }, firstVisit ? 0.2 : 0);
   }
   markReady();
-  if (animate) window.addEventListener("load", () => ScrollTrigger.refresh());
+  if (animate) {
+    window.addEventListener("load", () => ScrollTrigger.refresh());
+    // Images can change heights after first layout; keep trigger positions accurate
+    let timer;
+    new ResizeObserver(() => {
+      clearTimeout(timer);
+      timer = setTimeout(() => ScrollTrigger.refresh(), 200);
+    }).observe(document.getElementById("main"));
+  }
 }
 
 // ── Scroll reveals ───────────────────────────────────────────────────────────
@@ -62,9 +96,15 @@ const NEUTRAL = {
   autoAlpha: 1, filter: "blur(0px)",
 };
 
+const SCRUB = { start: "top 95%", end: "clamp(top 70%)" };
+
 /**
- * Hide `targets` now, then animate them in when they scroll into view.
- * Returns a cleanup function (kills the scroll triggers).
+ * Hide `targets` now, then reveal them as they scroll into view. The animation
+ * is scrubbed: its progress follows the scroll position, in both directions.
+ *   opts.group  - animate all targets as one staggered tween, triggered by this
+ *                 element (selector or node) instead of one trigger per target
+ *   opts.start / opts.end / opts.stagger / opts.ease
+ * Returns a cleanup function.
  */
 export function reveal(targets, from = { y: 40, autoAlpha: 0 }, opts = {}) {
   if (!animate) return () => {};
@@ -73,32 +113,39 @@ export function reveal(targets, from = { y: 40, autoAlpha: 0 }, opts = {}) {
 
   const to = {};
   for (const key of Object.keys(from)) if (key in NEUTRAL) to[key] = NEUTRAL[key];
-  gsap.set(els, { ...from, transition: "none" });
+  gsap.set(els, from);
 
-  let triggers = [];
+  const tweens = [];
   let killed = false;
   ready.then(() => {
     if (killed) return;
-    triggers = ScrollTrigger.batch(els, {
-      start: opts.start || "top 92%",
-      once: true,
-      onEnter: (batch) => gsap.to(batch, {
-        ...to,
-        duration: opts.duration || 0.9,
-        ease: opts.ease || "power3.out",
-        stagger: opts.stagger ?? 0.08,
-        overwrite: true,
-        clearProps: CLEAR,
-      }),
+    const make = (targetEls, trigger) => gsap.to(targetEls, {
+      ...to,
+      ease: opts.ease || "power2.out",
+      stagger: opts.stagger ?? 0.08,
+      scrollTrigger: { trigger, start: opts.start || SCRUB.start, end: opts.end || SCRUB.end, scrub: true },
     });
+    if (opts.group) tweens.push(make(els, opts.group));
+    else els.forEach((el) => tweens.push(make(el, el)));
   });
   return () => {
     killed = true;
-    triggers.forEach((t) => t.kill());
+    tweens.forEach((t) => { t.scrollTrigger?.kill(); t.kill(); });
   };
 }
 
-/** Headings: words rise out of a line mask when scrolled into view. */
+/** Time-based entrance for content that is already on screen. */
+function enter(targets, from, opts = {}) {
+  if (!animate) return;
+  const els = gsap.utils.toArray(targets);
+  if (!els.length) return;
+  gsap.set(els, from);
+  const to = { clearProps: CLEAR, duration: opts.duration || 0.8, ease: opts.ease || "power3.out", stagger: opts.stagger ?? 0.06, delay: opts.delay || 0 };
+  for (const key of Object.keys(from)) if (key in NEUTRAL) to[key] = NEUTRAL[key];
+  ready.then(() => gsap.to(els, to));
+}
+
+/** Headings: words rise out of a line mask, scrubbed with the scroll. */
 export function revealHeading(targets) {
   if (!animate) return;
   gsap.utils.toArray(targets).forEach((el) => {
@@ -106,9 +153,8 @@ export function revealHeading(targets) {
     gsap.set(split.words, { yPercent: 110 });
     ready.then(() => {
       gsap.to(split.words, {
-        yPercent: 0, duration: 1, ease: "expo.out", stagger: 0.05,
-        scrollTrigger: { trigger: el, start: "top 90%", once: true },
-        onComplete: () => split.revert(),
+        yPercent: 0, ease: "power2.out", stagger: 0.06,
+        scrollTrigger: { trigger: el, start: "top 95%", end: "clamp(top 65%)", scrub: true },
       });
     });
   });
@@ -176,44 +222,44 @@ export function homeSections() {
   const d = dir();
 
   revealHeading(".section-header .h2");
-  reveal(".section-header .link, .average", { x: 24 * d, autoAlpha: 0 });
-  reveal(".category-chip", { y: 40, scale: 0.8, autoAlpha: 0 }, { stagger: 0.06, ease: "back.out(1.6)" });
-  reveal(".carousel", { y: 50, autoAlpha: 0 }, { duration: 1 });
-  reveal(".carousel .product-card", { x: 60 * d, autoAlpha: 0 }, { stagger: 0.07, duration: 1, ease: "expo.out" });
+  reveal(".section-header .link, .average", { x: 40 * d, autoAlpha: 0 });
+  reveal(".category-chip", { y: 60, scale: 0.7, autoAlpha: 0 }, { group: ".category-row", stagger: 0.05, ease: "back.out(1.4)" });
+  reveal(".carousel", { y: 80, scale: 0.97, autoAlpha: 0 }, { end: "clamp(top 60%)" });
+  reveal(".carousel .product-card", { x: 120 * d, rotation: 2 * d, autoAlpha: 0 }, { group: ".carousel", stagger: 0.06, end: "clamp(top 45%)" });
 
-  // Promos slide in from alternating sides; their images pop and drift
+  // Promos slide in from alternating sides; their images spin in and drift
   document.querySelectorAll(".promo").forEach((promo, i) => {
-    reveal(promo, { x: (i % 2 ? 60 : -60) * d, autoAlpha: 0 }, { duration: 1.1, ease: "expo.out" });
+    reveal(promo, { x: (i % 2 ? 120 : -120) * d, autoAlpha: 0 }, { end: "clamp(top 60%)" });
     const img = promo.querySelector("img");
     if (!img) return;
-    reveal(img, { scale: 0.4, rotation: -20, autoAlpha: 0 }, { duration: 1.2, ease: "back.out(1.8)", start: "top 95%" });
-    ready.then(() => gsap.fromTo(img, { yPercent: 10 }, { yPercent: -10, ease: "none", scrollTrigger: { trigger: promo, start: "top bottom", end: "bottom top", scrub: true } }));
+    reveal(img, { scale: 0.3, rotation: -30 * d, autoAlpha: 0 }, { group: promo, ease: "back.out(1.6)", end: "clamp(top 50%)" });
+    ready.then(() => gsap.fromTo(img, { yPercent: 14 }, { yPercent: -14, ease: "none", scrollTrigger: { trigger: promo, start: "top bottom", end: "bottom top", scrub: true } }));
   });
 
-  reveal(".review-card", { y: 60, rotation: 1.5 * d, autoAlpha: 0 }, { stagger: 0.12, duration: 1 });
-  reveal(".review-card .avatar", { scale: 0, autoAlpha: 0 }, { stagger: 0.12, ease: "back.out(2.5)", start: "top 92%" });
+  reveal(".review-card", { y: 100, rotation: 3 * d, autoAlpha: 0 }, { group: ".reviews", stagger: 0.12, end: "clamp(top 50%)" });
+  reveal(".review-card .avatar", { scale: 0, rotation: -90, autoAlpha: 0 }, { group: ".reviews", stagger: 0.12, ease: "back.out(2)", end: "clamp(top 45%)" });
 
   const news = document.querySelector(".newsletter");
   if (news) {
-    gsap.set(news, { clipPath: "inset(10% 8% 10% 8% round 48px)", autoAlpha: 0 });
-    gsap.set(".newsletter-icon", { scale: 0, rotation: -40 });
-    gsap.set(".newsletter-copy, .newsletter-form", { y: 30, autoAlpha: 0 });
+    gsap.set(news, { clipPath: "inset(18% 12% 18% 12% round 64px)", autoAlpha: 0.4 });
+    gsap.set(".newsletter-icon", { scale: 0, rotation: -120 });
+    gsap.set(".newsletter-copy, .newsletter-form", { y: 50, autoAlpha: 0 });
     ready.then(() => {
-      gsap.timeline({ scrollTrigger: { trigger: news, start: "top 85%", once: true } })
-        .to(news, { clipPath: "inset(0% 0% 0% 0% round 24px)", autoAlpha: 1, duration: 1.2, ease: "expo.out", clearProps: "clipPath,opacity,visibility" })
-        .to(".newsletter-icon", { scale: 1, rotation: 0, duration: 0.9, ease: "elastic.out(1, 0.5)", clearProps: CLEAR }, 0.3)
-        .to(".newsletter-copy, .newsletter-form", { y: 0, autoAlpha: 1, stagger: 0.12, duration: 0.8, clearProps: CLEAR }, 0.4);
+      gsap.timeline({ scrollTrigger: { trigger: news, start: "top 95%", end: "clamp(top 45%)", scrub: true } })
+        .to(news, { clipPath: "inset(0% 0% 0% 0% round 24px)", autoAlpha: 1, duration: 1, ease: "power2.out" })
+        .to(".newsletter-icon", { scale: 1, rotation: 0, duration: 0.6, ease: "back.out(2)" }, 0.35)
+        .to(".newsletter-copy, .newsletter-form", { y: 0, autoAlpha: 1, stagger: 0.15, duration: 0.6 }, 0.45);
     });
   }
 
-  reveal(".feature", { y: 30, autoAlpha: 0 }, { stagger: 0.1 });
-  reveal(".feature .icon-circle", { scale: 0, rotation: -45, autoAlpha: 0 }, { stagger: 0.1, ease: "back.out(2.2)" });
+  reveal(".feature", { y: 50, autoAlpha: 0 }, { group: ".features", stagger: 0.1 });
+  reveal(".feature .icon-circle", { scale: 0, rotation: -90, autoAlpha: 0 }, { group: ".features", stagger: 0.1, ease: "back.out(2)" });
 }
 
 export function footerReveal() {
   if (!animate) return;
-  reveal(".footer-brand, .footer-col, .footer-contact", { y: 40, autoAlpha: 0 }, { stagger: 0.1, start: "top 95%" });
-  reveal(".footer-bottom", { autoAlpha: 0 }, { start: "top 100%" });
+  reveal(".footer-brand, .footer-col, .footer-contact", { y: 60, autoAlpha: 0 }, { group: ".site-footer", stagger: 0.08, start: "top 100%", end: "clamp(top 60%)" });
+  reveal(".footer-bottom", { y: 20, autoAlpha: 0 }, { start: "top 100%", end: "clamp(top 90%)" });
 }
 
 // ── Shop, product, cart ──────────────────────────────────────────────────────
@@ -222,18 +268,24 @@ let gridCleanup = () => {};
 export function animateGrid(grid) {
   if (!animate) return;
   gridCleanup();
-  gridCleanup = reveal(grid.querySelectorAll(".product-card, .state"), { y: 40, scale: 0.96, autoAlpha: 0 }, { stagger: 0.05, duration: 0.7, start: "top 98%" });
+  const items = gsap.utils.toArray(grid.querySelectorAll(".product-card, .state"));
+  const fold = window.innerHeight * 0.95;
+  // Cards already on screen get a quick staggered entrance; the rest are scrubbed
+  const visible = items.filter((el) => el.getBoundingClientRect().top < fold);
+  const below = items.filter((el) => el.getBoundingClientRect().top >= fold);
+  enter(visible, { y: 30, scale: 0.96, autoAlpha: 0 }, { stagger: 0.05, duration: 0.6 });
+  gridCleanup = reveal(below, { y: 80, scale: 0.92, autoAlpha: 0 });
 }
 
 export function shopIntro() {
   if (!animate) return;
-  revealHeading(".page-head .h1");
-  reveal(".breadcrumb", { y: 10, autoAlpha: 0 }, { start: "top 100%" });
+  const d = dir();
+  enter(".breadcrumb, .page-head .h1", { y: 20, autoAlpha: 0 }, { stagger: 0.1 });
   if (window.matchMedia("(min-width: 1024px)").matches) {
-    reveal(".filters", { x: -30 * dir(), autoAlpha: 0 }, { start: "top 100%" });
-    reveal(".filters-form > *", { y: 16, autoAlpha: 0 }, { stagger: 0.06, start: "top 100%" });
+    enter(".filters", { x: -30 * d, autoAlpha: 0 }, { delay: 0.1 });
+    enter(".filters-form > *", { y: 16, autoAlpha: 0 }, { delay: 0.2 });
   }
-  reveal(".toolbar", { y: 16, autoAlpha: 0 }, { start: "top 100%" });
+  enter(".toolbar", { y: 16, autoAlpha: 0 }, { delay: 0.15 });
 }
 
 export function openFilters(panel) {
@@ -252,8 +304,9 @@ export function productIntro() {
     .from(".product-detail > *", { x: 30 * d, autoAlpha: 0, stagger: 0.07, duration: 0.8, ease: "power4.out", clearProps: CLEAR }, 0.25);
   ready.then(() => tl.play());
   revealHeading(".section .h2");
-  reveal(".reviews-grid .review-card", { y: 40, autoAlpha: 0 }, { stagger: 0.1 });
-  reveal(".section .product-card", { y: 50, autoAlpha: 0 }, { stagger: 0.08 });
+  reveal(".section-header .link", { x: 40 * d, autoAlpha: 0 });
+  reveal(".reviews-grid .review-card", { y: 80, rotation: 2 * d, autoAlpha: 0 }, { group: ".reviews-grid", stagger: 0.12 });
+  reveal(".section .product-card", { y: 100, scale: 0.92, autoAlpha: 0 }, { group: ".section .product-grid", stagger: 0.08, end: "clamp(top 50%)" });
 }
 
 export function swapImage(img, src) {
@@ -396,10 +449,14 @@ export function pageTransitions() {
     const url = new URL(a.href, location.href);
     if (url.origin !== location.origin || url.href === location.href || (url.pathname === location.pathname && url.hash)) return;
     e.preventDefault();
+    lockScroll(true);
     gsap.to("#main, #site-bottom", { autoAlpha: 0, y: -12, duration: 0.28, ease: "power2.in", onComplete: () => (location.href = url.href) });
   });
   // Coming back with the browser's back button restores the page from cache
   window.addEventListener("pageshow", (e) => {
-    if (e.persisted) gsap.set("#main, #site-bottom", { clearProps: "all" });
+    if (e.persisted) {
+      gsap.set("#main, #site-bottom", { clearProps: "all" });
+      lockScroll(false);
+    }
   });
 }

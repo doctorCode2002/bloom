@@ -1,6 +1,6 @@
 # Bloom — Product Requirements Document
 
-**Version:** 1.6
+**Version:** 1.7
 **Date:** 2026-10-04
 **Stack:** Vanilla HTML, CSS, JavaScript (no frameworks, no backend)
 
@@ -86,7 +86,9 @@ The message is written in the customer's currently selected language.
 - **No flash of unstyled content:** the page stays hidden until the web fonts are ready (at most 1.5s), then one timeline reveals it. Content added later gets its starting animation state before the browser draws it. A 3-second safety timer shows the page even if the scripts fail.
 - **Intro:** the announcement bar, header and navigation slide in on the first page of a visit. Later pages only fade in.
 - **Home hero:** a timeline where the card unmasks, the headline rises word by word, then the copy, buttons and trust points stagger in. The image reveals in a circle, the sale tag pops in and the mini product card slides in. After that they float gently, follow the pointer on desktop, and drift at different speeds while scrolling.
-- **Scrolling:** headings rise word by word. Categories, products, promo banners (alternating sides, with drifting images), reviews, the newsletter (unmasks), features and the footer animate in as they come into view.
+- **Smooth scrolling:** Lenis 1.3, driven by GSAP's clock so ScrollTrigger stays in sync. Scrollable panels (mobile menu, filters, category dropdown) keep normal scrolling, and the page stops scrolling while they're open.
+- **Scrolling (scrubbed, `scrub: true`):** section animations follow the scroll position and play backwards when scrolling up. Headings rise word by word. Category chips, product cards, promo banners (alternating sides, with spinning and drifting images), reviews, the newsletter (unmasks), features and the footer animate in. The end points use `clamp()`, so sections near the bottom of the page still finish.
+- **Content visible on load** (hero, top of the shop and product pages, cart, shop cards already on screen) uses time-based entrances, because a scrubbed animation there would already be finished.
 - **Interactions:** the product image flies into the cart icon when added, and the cart icon bounces and its count pops. The theme switch spreads from the toggle in a circle (View Transitions API). Primary buttons follow the pointer slightly on desktop. Product gallery images crossfade, removed cart lines collapse, the cart total pulses, and menus and the filters panel stagger open. Content fades out before moving to another page.
 - **Reduced motion:** everything is switched off when the device asks for reduced motion.
 
@@ -204,6 +206,7 @@ Run locally with `python3 -m http.server` from the project folder. The pages use
 
 ## Changelog
 
+- **1.7 (2026-10-04):** Added Lenis smooth scrolling. Section animations are now scrubbed to the scroll position (5.7).
 - **1.6 (2026-10-04):** Added GSAP animations (5.7).
 - **1.5 (2026-10-04):** WhatsApp order number set to +972 59 260 7179.
 - **1.4 (2026-10-04):** Built v1 in vanilla HTML/CSS/JS: Home, Shop, Product and Cart pages with WhatsApp checkout, EN/AR and light/dark. Product data from DummyJSON (5.1). Added delivery rule (5.3) and code structure (7.1). The wishlist heart was left off product cards, because the wishlist isn't in v1.
